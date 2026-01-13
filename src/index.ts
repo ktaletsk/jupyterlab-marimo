@@ -20,6 +20,8 @@ import { Message } from "@lumino/messaging";
 
 import { pythonIcon } from "@jupyterlab/ui-components";
 
+import { Notification } from "@jupyterlab/apputils";
+
 /**
  * The MIME type for Marimo files.
  */
@@ -99,18 +101,16 @@ class MarimoEditorWidget extends Widget {
       // Pattern 1: /marimo/ endpoint with file parameter
       this._marimoUrl = `${baseUrl}marimo/?file=${encodedPath}`;
 
-      console.log(`Loading Marimo editor for file: ${filePath}`);
-      console.log(`Marimo URL: ${this._marimoUrl}`);
-
       this._iframe.src = this._marimoUrl;
 
       // Add load event listener to handle errors
       this._iframe.addEventListener("load", () => {
-        console.log("Marimo iframe loaded successfully");
+        // Iframe loaded successfully - no action needed
       });
 
       this._iframe.addEventListener("error", (e) => {
         console.error("Error loading Marimo iframe:", e);
+        Notification.error("Failed to load Marimo editor", { autoClose: 5000 });
         this._showError(
           "Failed to load Marimo editor. Please check:\n" +
             "1. The file path is correct\n" +
@@ -236,7 +236,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [IFileBrowserFactory],
   activate: (app: JupyterFrontEnd, browserFactory: IFileBrowserFactory) => {
-    console.log("JupyterLab extension jupyterlab-marimo is activated!");
+    Notification.info("Marimo extension activated", { autoClose: 3000 });
 
     const { docRegistry } = app;
 
@@ -253,8 +253,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     // Register the factory
     docRegistry.addWidgetFactory(factory);
-
-    console.log("Marimo editor factory registered for .mo.py files");
 
     // Optional: Add a command to open files in Marimo
     app.commands.addCommand("marimo:open", {
@@ -276,7 +274,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         }
 
         if (path && path.endsWith(MARIMO_FILE_EXTENSION)) {
-          console.log(`Opening ${path} in Marimo editor`);
+          console.warn(`[jupyterlab-marimo] Opening ${path} in Marimo editor`);
           app.commands.execute("docmanager:open", {
             path,
             factory: "Marimo Editor",
@@ -293,8 +291,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
       selector: '.jp-DirListing-item[data-file-type="marimo"]',
       rank: 0,
     });
-
-    console.log("Marimo context menu items added");
   },
 };
 
